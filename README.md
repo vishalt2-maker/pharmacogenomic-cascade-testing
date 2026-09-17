@@ -57,6 +57,16 @@ summaries; see `docs/CORRECTIONS.md` §B.
 
 ---
 
+## Try it without installing anything
+
+A hosted demonstration runs at
+**https://pct-demo.calmisland-fe569d85.centralindia.azurecontainerapps.io**
+
+You will meet an acknowledgement notice first. The database is in-memory and
+shared by everyone using the link, there is no authentication, and everything
+is discarded when the container restarts. Details and the deployment itself are
+in **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
 ## Running it
 
 **Node 22.18 or later is the only prerequisite.** No database to install, no

@@ -1,0 +1,10 @@
+node_modules/
+.data/
+demo-output/
+.git/
+.github/
+docs/
+test/
+*.bundle
+*.log
+.DS_Store

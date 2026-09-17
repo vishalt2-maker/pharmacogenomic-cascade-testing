@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Before you continue — Pharmacogenomic Cascade Testing</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+<style>
+  /* The class is `notice`, not `gate`: `.gate` already means a row of the
+     gate ladder in the shared stylesheet, and reusing it here made this page
+     inherit a three-column grid.
+     Flex rather than `place-items: center`, which centres by shrinking the
+     item to its content width. */
+  body { display: flex; align-items: flex-start; justify-content: center;
+         min-height: 100vh; padding: 32px 18px 48px; }
+  .notice { width: 100%; max-width: 42rem; }
+  .notice .panel { padding: 26px 28px 24px; }
+  .notice h1 { font-size: 19px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .notice .lede { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
+  .notice h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+             color: var(--muted); margin: 22px 0 8px; }
+  .notice ul { margin: 0; padding-left: 19px; }
+  .notice li { margin-bottom: 9px; font-size: 13.5px; line-height: 1.55; }
+  .notice li strong { font-weight: 640; }
+  .ack { display: flex; gap: 10px; align-items: flex-start; margin: 22px 0 4px;
+         padding: 13px 15px; border: 1px solid var(--line); border-radius: 8px;
+         background: #fbfcfe; cursor: pointer; }
+  .ack input { margin: 2px 0 0; flex: none; }
+  .ack span { font-size: 13.5px; line-height: 1.5; }
+  .notice footer { margin-top: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .notice .fine { font-size: 11.5px; color: var(--muted); margin-top: 18px;
+                border-top: 1px solid var(--line-2); padding-top: 14px; }
+  .notice .fine a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="notice">
+  <div class="panel">
+    <h1>Pharmacogenomic Cascade Testing</h1>
+    <p class="lede">A concept build. Please read this before continuing.</p>
+
+    <h2>What this is</h2>
+    <ul>
+      <li>A working demonstration of a fail-closed clinical decision support system,
+        built to show how a confirmed severe cutaneous adverse drug reaction could
+        become a signed familial pharmacogenomic advisory.</li>
+      <li>Its purpose is to show <strong>where the system refuses to act</strong>. Most of
+        what you will see it do is decline to produce anything, and say exactly why.</li>
+    </ul>
+
+    <h2>What it is not</h2>
+    <ul>
+      <li>It is <strong>not validated</strong>, and carries <strong>no regulatory approval
+        of any kind</strong>. It must not inform any real prescribing decision.</li>
+      <li>The clinical content is a <strong>demonstration rule pack</strong>. Its
+        citations were checked against primary bibliographic records, which is not the
+        same as a clinician having read and curated them.</li>
+      <li>There is <strong>no authentication</strong>. The user switcher lets anyone act
+        as any of the seeded demonstration staff. Nothing here establishes who you are.</li>
+    </ul>
+
+    <h2>Do not enter real patient data</h2>
+    <ul>
+      <li>Everything you type is shared with everyone else using this link, and is
+        <strong>discarded when the server restarts</strong>. Nothing is written to disk.</li>
+      <li>There is no Data Processing Agreement behind this deployment and no key
+        management. Entering identifiable information about a real person would be
+        inappropriate and is your responsibility, not this system's.</li>
+      <li>Use the seeded demonstration records, or invent details.</li>
+    </ul>
+
+    <form method="POST" action="/api/acknowledge">
+      <label class="ack">
+        <input type="checkbox" name="understood" required>
+        <span>I understand this is an unvalidated demonstration, that it has no
+          regulatory approval, and that I will not enter real patient data or use
+          anything it produces for a clinical decision.</span>
+      </label>
+      <footer>
+        <button class="primary" type="submit">Continue to the demonstration</button>
+        <span class="hint">Applies to this browser session.</span>
+      </footer>
+    </form>
+
+    <p class="fine">
+      Source, including the corrections this build makes to its own specification and
+      an honest list of what is not built:
+      <a href="https://github.com/vishalt2-maker/pharmacogenomic-cascade-testing"
+         target="_blank" rel="noopener">github.com/vishalt2-maker/pharmacogenomic-cascade-testing</a>
+    </p>
+  </div>
+</div>
+</body>
+</html>

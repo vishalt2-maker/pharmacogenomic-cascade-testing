@@ -24,6 +24,9 @@ import { RenderRefused, formatViolations } from '../render/linter.ts';
 import { exportToRegistry, publishAggregate, pilotEndpoints } from '../registry/export.ts';
 import { FIGURES } from '../../db/seed/context-figures.ts';
 import { DEFAULT_POLICY, INDIA_TIER_DEFINITIONS } from '../engine/types.ts';
+import {
+  IS_PUBLIC_DEMO, acknowledgementCookie, gate, hasAcknowledged, publicHeaders,
+} from './public-demo.ts';
 import type { RenderedDocument } from '../render/advisory.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -92,13 +95,20 @@ function json(res: http.ServerResponse, status: number, data: unknown) {
     'content-type': 'application/json; charset=utf-8',
     'content-length': b.length,
     'cache-control': 'no-store',
+    ...publicHeaders(),
   });
   res.end(b);
 }
 
-function send(res: http.ServerResponse, status: number, type: string, data: Buffer | string) {
+function send(
+  res: http.ServerResponse, status: number, type: string, data: Buffer | string,
+  extra: Record<string, string> = {},
+) {
   const b = Buffer.isBuffer(data) ? data : Buffer.from(data);
-  res.writeHead(status, { 'content-type': type, 'content-length': b.length, 'cache-control': 'no-store' });
+  res.writeHead(status, {
+    'content-type': type, 'content-length': b.length, 'cache-control': 'no-store',
+    ...publicHeaders(), ...extra,
+  });
   res.end(b);
 }
 
@@ -134,6 +144,35 @@ route('GET', /^\/api\/health$/, async ({ res }) => {
     } : null,
     notice: 'CONCEPT BUILD. Not deployed, not validated, no regulatory approval.',
   });
+});
+
+/** Liveness probe for the container platform. Deliberately free of any state. */
+route('GET', /^\/healthz$/, async ({ res }) =>
+  send(res, 200, 'text/plain; charset=utf-8', 'ok'));
+
+/**
+ * The acknowledgement gate. Accepts the form post from the gate page and
+ * sets a signed session cookie. Only reachable in public demonstration mode;
+ * a local checkout has no gate to acknowledge.
+ */
+route('POST', /^\/api\/acknowledge$/, async ({ req, res }) => {
+  if (!IS_PUBLIC_DEMO) { json(res, 404, { error: 'NOT_FOUND' }); return; }
+  const chunks: Buffer[] = [];
+  for await (const c of req) chunks.push(c as Buffer);
+  const body = Buffer.concat(chunks).toString('utf8');
+  const accepted = /(^|&)understood=/.test(body) ||
+    (() => { try { return JSON.parse(body || '{}').understood === true; } catch { return false; } })();
+  if (!accepted) {
+    json(res, 400, {
+      error: 'NOT_ACKNOWLEDGED',
+      detail: 'Tick the box to confirm you have read what this is.',
+    });
+    return;
+  }
+  res.writeHead(303, {
+    location: '/', 'set-cookie': acknowledgementCookie(req), ...publicHeaders(),
+  });
+  res.end();
 });
 
 route('GET', /^\/api\/session$/, async ({ req, res }) => {
@@ -583,8 +622,13 @@ route('POST', /^\/cds-services\/pct-prescribing-check$/, async ({ req, res }) =>
 });
 
 // ---- static UI ------------------------------------------------------
-route('GET', /^\/(?:index\.html)?$/, async ({ res }) => {
-  send(res, 200, MIME['.html'], await fs.readFile(path.join(UI_DIR, 'index.html')));
+route('GET', /^\/(?:index\.html)?$/, async ({ req, res }) => {
+  const file = IS_PUBLIC_DEMO && !hasAcknowledged(req) ? 'acknowledge.html' : 'index.html';
+  send(res, 200, MIME['.html'], await fs.readFile(path.join(UI_DIR, file)));
+});
+
+route('GET', /^\/acknowledge$/, async ({ res }) => {
+  send(res, 200, MIME['.html'], await fs.readFile(path.join(UI_DIR, 'acknowledge.html')));
 });
 
 route('GET', /^\/(app\.js|styles\.css)$/, async ({ res, params }) => {
@@ -599,8 +643,30 @@ export function createServer(): http.Server {
   return http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
     try {
+      // Nobody reaches the application, or any API route, without first
+      // acknowledging what this is.
+      const stop = gate(req, url.pathname);
+      if (stop === 'refuse-api') {
+        json(res, 403, {
+          error: 'NOT_ACKNOWLEDGED',
+          detail: 'Open the site in a browser and read the notice before using the API.',
+        });
+        return;
+      }
+      if (stop === 'show-gate') {
+        send(res, 200, MIME['.html'],
+          await fs.readFile(path.join(UI_DIR, 'acknowledge.html')));
+        return;
+      }
+
+      // HEAD is routed as GET. Node discards the body on a HEAD response by
+      // itself, so the handlers need no special case. Link previews, uptime
+      // checks and some proxies send HEAD, and a 404 from those is a false
+      // alarm about a service that is actually fine.
+      const method = req.method === 'HEAD' ? 'GET' : (req.method ?? 'GET');
+
       for (const r of routes) {
-        if (r.method !== (req.method ?? 'GET')) continue;
+        if (r.method !== method) continue;
         const m = r.pattern.exec(url.pathname);
         if (!m) continue;
         await r.handler({ req, res, params: m.slice(1), url });
@@ -634,13 +700,30 @@ export function createServer(): http.Server {
 }
 
 if (import.meta.filename === process.argv[1]) {
+  if (IS_PUBLIC_DEMO) {
+    // In-memory database: nothing touches disk, and everything is discarded
+    // when the container restarts.
+    process.env.PCT_DATA_DIR ??= ':memory:';
+  }
   await migrate();
+
+  if (IS_PUBLIC_DEMO) {
+    const { loadRulePack } = await import('../../db/seed/load.ts');
+    const { RULE_PACK } = await import('../../db/seed/rule-pack-2026.03.1.ts');
+    const { seedDemoOrganizations } = await import('../../db/seed/demo-org.ts');
+    await loadRulePack(RULE_PACK, { activate: true });
+    await seedDemoOrganizations();
+  }
+
   const pack = await getActiveRulePack();
   const server = createServer();
   server.listen(PORT, () => {
     console.log(`\n  PCT concept build listening on http://localhost:${PORT}`);
     console.log(`  Rule pack: ${pack ? `${pack.version} (${pack.provenanceStatus})` : 'NONE LOADED - run: npm run seed'}`);
     console.log(`  CDS Hooks discovery: http://localhost:${PORT}/cds-services`);
+    if (IS_PUBLIC_DEMO) {
+      console.log(`  PUBLIC DEMONSTRATION MODE: in-memory database, acknowledgement gate on.`);
+    }
     console.log(`\n  Nothing here is deployed, validated, or approved by any regulator.\n`);
   });
   const shutdown = async () => { server.close(); await closeDb(); process.exit(0); };
