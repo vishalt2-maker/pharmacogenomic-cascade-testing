@@ -64,13 +64,17 @@ build step, no Docker. Node runs the TypeScript directly, and the database runs
 inside the Node process.
 
 ```bash
-git clone <this-repo> && cd genomics-pvigilance
+git clone https://github.com/vishalt2-maker/pharmacogenomic-cascade-testing
+cd pharmacogenomic-cascade-testing
 npm install
 npm run setup     # create the database, load the rule pack, seed two hospitals
 npm run demo      # the demonstration: refusals first, then the happy path
 npm run serve     # the AMC module at http://localhost:8787
 npm test          # 240 tests
 ```
+
+`npm start` does the setup and then serves, which is the shortest path to a
+running screen on a machine that has never seen this before.
 
 `npm run demo` writes rendered advisories to `demo-output/`.
 
