@@ -62,6 +62,10 @@ summaries; see `docs/CORRECTIONS.md` §B.
 A hosted demonstration runs at
 **https://pct-demo.calmisland-fe569d85.centralindia.azurecontainerapps.io**
 
+> **This deployment deletes itself on 20 September 2026.** It exists to be
+> looked at for a couple of days, not to be depended on. Clone the repository
+> if you want something that keeps working.
+
 You will meet an acknowledgement notice first. The database is in-memory and
 shared by everyone using the link, there is no authentication, and everything
 is discarded when the container restarts. Details and the deployment itself are

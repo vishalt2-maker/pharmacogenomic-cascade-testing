@@ -94,6 +94,54 @@ az containerapp logs show -n pct-demo -g rg-pct-demo --follow
 
 ---
 
+## Scheduled teardown
+
+**This deployment is set to delete itself on 20 September 2026, at 20:00 IST.**
+After that the link is dead and the Azure charges stop.
+
+The resource group carries the expiry in its tags, so the portal says so too:
+
+```
+delete-after = 2026-09-20
+teardown     = automatic
+```
+
+The mechanism is a `launchd` job on the machine that deployed it, at
+`~/.pct-teardown/`. It runs a **daily check** rather than firing once at a
+fixed moment, for two reasons: `launchd` cannot schedule a specific year, and
+a laptop that is asleep or shut at the appointed minute would miss a one-shot
+job entirely. It also runs on login. So it fires at the first opportunity on or
+after the due date, however long the machine has been off.
+
+Once it has deleted the group it removes itself and will not run again.
+
+```bash
+cat ~/.pct-teardown/teardown.log     # what it has done, and what is left to do
+~/.pct-teardown/cancel.sh            # call it off and keep the demo running
+```
+
+**To keep the demo beyond that date**, run `cancel.sh`, or edit the `DUE` line
+in `~/.pct-teardown/teardown.sh` to a later date.
+
+### What could stop it firing
+
+It is a local job, not an Azure-native one, so it depends on two things:
+
+- **The machine being switched on** at some point after the due date. It
+  catches up on the next login, so this is a delay rather than a failure.
+- **The Azure CLI still being logged in.** If the sign-in has lapsed the
+  script deletes nothing, logs the reason, and retries the next day. It never
+  fails silently, but it does need someone to read the log.
+
+If either worries you, delete the group by hand and be certain:
+
+```bash
+az group delete -n rg-pct-demo --subscription 64df5331-e3ac-4b6a-8e56-a9b31aa048fd --yes
+```
+
+Nothing of value is lost either way. The source is in git, the database is in
+memory, and recreating the whole deployment is one `az containerapp up`.
+
 ## Cost, and turning it off
 
 A warm replica at 0.5 vCPU and 1 GiB runs continuously. Azure Container Apps
