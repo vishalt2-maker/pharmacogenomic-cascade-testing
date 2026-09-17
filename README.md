@@ -69,7 +69,7 @@ npm install
 npm run setup     # create the database, load the rule pack, seed two hospitals
 npm run demo      # the demonstration: refusals first, then the happy path
 npm run serve     # the AMC module at http://localhost:8787
-npm test          # 224 tests
+npm test          # 240 tests
 ```
 
 `npm run demo` writes rendered advisories to `demo-output/`.
@@ -201,7 +201,27 @@ permissioned, auditable, and scoped to the moment it is asked to act.
 | `src/render/advisory.ts` | Two documents: clinical, and a patient sheet in plain language. |
 | `src/registry/export.ts` | De-identification, consent filtering, small-cell suppression. |
 | `src/api/cds-hooks.ts` | The decision-support cards. |
-| `src/ui/` | The mock AMC screen. Vanilla ES modules, no framework. |
+| `src/ui/` | The AMC screen. Vanilla ES modules, no framework. |
+
+### The operator screen has two modes
+
+By default it is a **data-entry interface**: a form for each step of the
+pathway, covering the reaction and its causality, the genotype order and its
+result, the advisory's recipient counts, and the counselling record.
+
+Every option those forms offer is served by `GET /api/reference`, which reads
+enum members and CHECK constraint values out of the database and the rest out
+of the active rule pack. A form therefore cannot offer a value the schema would
+reject, and cannot drift when the schema changes. Choices that will *block* the
+pathway are still offered and labelled as blocking, because hiding them teaches
+the operator nothing about where the gates are. `test/reference.test.ts`
+asserts those labels are truthful by submitting every offered value and
+checking the engine agrees.
+
+Turning on **Demo shortcuts** adds a one-click button per step with fixed
+values, for walking an audience through five refusals without typing dates
+while they watch. The forms stay visible underneath. The setting persists per
+browser and is off by default.
 
 ---
 
@@ -290,7 +310,7 @@ linter refused the whole document. The rule was right.
 
 ## Tests
 
-224 tests, weighted deliberately toward the refusals.
+240 tests, weighted deliberately toward the refusals.
 
 ```
 test/engine.test.ts          75  the gates, the fail-closed invariants, the negative pathway
@@ -302,6 +322,7 @@ test/registry.test.ts        17  consent, de-identification, small-cell suppress
 test/pdf.test.ts             13  structural validity, or refusal
 test/wording-hygiene.test.ts  7  the system's own strings obey its own wording rules
 test/portability.test.ts      7  a clean clone can build its own database and run
+test/reference.test.ts       16  the forms cannot offer a value the schema would reject
 ```
 
 ---

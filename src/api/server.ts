@@ -23,7 +23,7 @@ import { advisoryPdf, pdfIsPossible } from '../render/document-to-pdf.ts';
 import { RenderRefused, formatViolations } from '../render/linter.ts';
 import { exportToRegistry, publishAggregate, pilotEndpoints } from '../registry/export.ts';
 import { FIGURES } from '../../db/seed/context-figures.ts';
-import { INDIA_TIER_DEFINITIONS } from '../engine/types.ts';
+import { DEFAULT_POLICY, INDIA_TIER_DEFINITIONS } from '../engine/types.ts';
 import type { RenderedDocument } from '../render/advisory.ts';
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -31,6 +31,24 @@ const UI_DIR = path.join(PROJECT_ROOT, 'src', 'ui');
 
 /** The demonstration rule pack is explicitly opted into, and said out loud. */
 const DEMO_POLICY = { allowDemonstrationPack: true };
+
+/**
+ * Standard counselling topics offered by the form.
+ *
+ * `right_not_to_know` is mandatory: the schema has a CHECK constraint that
+ * refuses a counselling record without it, and the form marks it so nobody
+ * meets that constraint as an error message.
+ */
+const COUNSELLING_TOPICS = [
+  { value: 'variant_meaning', label: 'What the variant does and does not mean', mandatory: false },
+  { value: 'drugs_to_avoid', label: 'Which drugs to avoid, and that alternatives exist', mandatory: false },
+  { value: 'non_determinism', label: 'Carrying the variant is not a prognosis', mandatory: false },
+  { value: 'familial_probability', label: 'Roughly 50% probability for each first-degree relative', mandatory: false },
+  { value: 'right_not_to_know', label: 'Relatives may decline to be tested or informed', mandatory: true },
+  { value: 'sharing_is_voluntary', label: 'Sharing the advisory is the patient\u2019s decision alone', mandatory: false },
+  { value: 'alternatives', label: 'Alternatives and their own cautions', mandatory: false },
+  { value: 'negative_not_clearance', label: 'A negative result does not establish absence of risk', mandatory: false },
+];
 
 class HttpError extends Error {
   status: number;
@@ -154,6 +172,101 @@ route('GET', /^\/api\/rule-packs$/, async ({ res }) => {
 route('GET', /^\/api\/reason-codes$/, async ({ res }) => json(res, 200, REASON_CODES));
 route('GET', /^\/api\/figures$/, async ({ res }) =>
   json(res, 200, { figures: FIGURES, indiaTiers: INDIA_TIER_DEFINITIONS }));
+
+/**
+ * Reference data for the data-entry forms.
+ *
+ * Enum members and CHECK constraint values are read out of the database
+ * rather than restated here, so a form physically cannot offer a value the
+ * schema would reject. Drug names, genes and diplotypes come from the
+ * active rule pack for the same reason.
+ *
+ * Gate-relevant policy travels with them, so a form can show which choices
+ * will pass and which will block. A coordinator should be able to see that
+ * "possible" causality stops the pathway BEFORE they choose it, rather than
+ * discovering it from a refusal afterwards.
+ */
+route('GET', /^\/api\/reference$/, async ({ req, res }) => {
+  await requireCtx(req);
+  const pack = await getActiveRulePack();
+
+  const { enums, checks } = await asService(async (db) => {
+    const e = await db.query<{ typname: string; enumlabel: string }>(
+      `select t.typname, e.enumlabel
+         from pg_type t
+         join pg_enum e on e.enumtypid = t.oid
+         join pg_namespace n on n.oid = t.typnamespace
+        where n.nspname = 'clinical'
+        order by t.typname, e.enumsortorder`);
+
+    // Pull the permitted values straight out of the CHECK constraint text.
+    const c = await db.query<{ table_name: string; def: string }>(
+      `select cl.relname as table_name, pg_get_constraintdef(co.oid) as def
+         from pg_constraint co
+         join pg_class cl on cl.oid = co.conrelid
+         join pg_namespace n on n.oid = cl.relnamespace
+        where n.nspname = 'clinical' and co.contype = 'c'`);
+
+    const byTable: Record<string, string[]> = {};
+    for (const row of c.rows) {
+      if (!/relationship_type|status/.test(row.def)) continue;
+      const values = [...row.def.matchAll(/'([a-z_]+)'::text/g)].map((m) => m[1]);
+      if (values.length > 1) byTable[row.table_name] = values;
+    }
+
+    const byType: Record<string, string[]> = {};
+    for (const row of e.rows) (byType[row.typname] ??= []).push(row.enumlabel);
+    return { enums: byType, checks: byTable };
+  });
+
+  const policy = DEFAULT_POLICY;
+
+  json(res, 200, {
+    reactionTypes: (enums.reaction_type ?? []).map((value) => ({
+      value,
+      inScope: (policy.inScopeReactions as readonly string[]).includes(value),
+    })),
+    causalityGrades: (enums.who_umc ?? []).map((value) => ({
+      value,
+      sufficient: (policy.sufficientCausality as readonly string[]).includes(value),
+    })),
+    consentPurposes: enums.consent_purpose ?? [],
+    relationshipTypes: checks.advisory_recipient_summary ?? [],
+    orderStatuses: checks.genotype_orders ?? [],
+    genes: (pack?.genes ?? []).map((g) => g.symbol),
+    drugs: (pack?.drugs ?? []).map((d) => ({
+      name: d.name,
+      synonyms: d.synonyms ?? [],
+      inCascadeScope: (pack?.pairs ?? []).some(
+        (pr) => pr.drugName === d.name && pr.inCascadeScope),
+    })),
+    diplotypes: (pack?.diplotypes ?? []).map((d) => {
+      const ph = (pack?.phenotypes ?? []).find((p) => p.id === d.phenotypeId);
+      return {
+        diplotype: d.diplotype,
+        gene: d.geneSymbol,
+        phenotype: ph?.term ?? 'unknown',
+        isRisk: ph?.isRiskPhenotype ?? false,
+      };
+    }),
+    // Free text in the schema. Offered as suggestions, never as a closed list,
+    // because laboratories report methods inconsistently.
+    methods: ['PCR-SSP', 'PCR-SSO', 'TaqMan real-time PCR', 'Sanger sequencing', 'NGS'],
+    accreditations: ['NABL', 'CAP', 'none recorded'].map((value) => ({
+      value,
+      accepted: policy.acceptedAccreditations.some(
+        (a) => a.toLowerCase() === value.toLowerCase()),
+    })),
+    outcomes: ['recovered', 'recovering', 'not recovered', 'recovered with sequelae',
+               'fatal', 'unknown'],
+    counsellingTopics: COUNSELLING_TOPICS,
+    policy: {
+      acceptedAccreditations: policy.acceptedAccreditations,
+      requireIndependentVerification: policy.requireIndependentVerification,
+      genotypeMaxAgeDays: policy.genotypeMaxAgeDays,
+    },
+  });
+});
 
 // ---- cases ----------------------------------------------------------
 route('GET', /^\/api\/cases$/, async ({ req, res }) => {

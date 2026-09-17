@@ -11,6 +11,12 @@ npm run setup && npm run serve
 
 Open `http://localhost:8787`. Acting as **S. Iyer**, clinical pharmacist, Pune.
 
+**Turn on "Demo shortcuts" in the header.** The screen is a data-entry
+interface by default, with a form for each step. The shortcuts add a one-click
+button per step so you can walk the pathway at talking speed. The forms stay
+visible underneath, which is the point: a reviewer who asks "so where does the
+actual drug name go?" gets to see the answer without you leaving the flow.
+
 ## The ninety seconds
 
 > Stevens-Johnson Syndrome and Toxic Epidermal Necrolysis are among the few
@@ -131,6 +137,22 @@ Set the patient's language to Hindi and open the patient sheet.
 > that carrier yield in tested relatives comes back near fifty per cent. If it
 > comes back at population baseline, the thesis is wrong. We wrote the prediction
 > into the API so it can't be quietly dropped.
+
+## If asked "can it take real data?"
+
+Switch the toggle off and scroll to the forms. Point at the suspect drug field.
+
+> Free text, because a real reaction can be to any drug. It resolves brand
+> names against the rule pack, so Eptoin finds phenytoin. A drug we do not
+> cover simply falls out of scope at gate 1 and produces nothing, which is a
+> different thing from an error.
+
+Then point at the reaction type and accreditation dropdowns.
+
+> Every option there is read out of the database schema at request time, so the
+> form cannot offer something the database would reject. And the ones that will
+> block the pathway are still listed, labelled as blocking. You should be able
+> to see where the gate is before you hit it.
 
 ## If asked "is it AI?"
 

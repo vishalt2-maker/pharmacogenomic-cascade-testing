@@ -185,3 +185,91 @@ tr.suppressed td { color: var(--muted); font-style: italic; }
 .section-note { font-size: 12px; color: var(--muted); border-left: 2px solid var(--line);
                 padding-left: 10px; margin: 10px 0; }
 .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+
+/* ---- data-entry forms ------------------------------------------- */
+.step-form {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px 16px; margin: 14px 0; background: #fcfdff;
+}
+.step-form h3 {
+  margin: 0 0 2px; font-size: 13.5px; text-transform: none; letter-spacing: 0;
+  color: var(--ink); font-weight: 650;
+}
+.step-form .hint { margin: 2px 0 12px; }
+
+.field-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px 14px; align-items: start;
+}
+.field-grid .field { margin: 0; }
+.field-grid .field.wide { grid-column: 1 / -1; }
+.field > span { display: flex; align-items: baseline; gap: 6px; }
+.field .req {
+  font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--muted);
+}
+.field input, .field select, .field textarea { width: 100%; }
+textarea { resize: vertical; min-height: 58px; font-family: inherit; }
+
+.checkgroup { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+.checkline {
+  display: flex; align-items: center; gap: 8px; font-size: 12.5px;
+  font-weight: 400; color: var(--ink);
+}
+.checkline input { width: auto; margin: 0; flex: none; }
+.checkline.required { color: var(--ink-2); }
+.checkline em {
+  font-style: normal; font-size: 10.5px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+
+.form-actions {
+  display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap;
+}
+.form-actions .hint { margin: 0; }
+
+.form-error {
+  margin-top: 12px; padding: 9px 12px; border-radius: 7px; font-size: 12.5px;
+  background: var(--block-soft); border: 1px solid #f0c9c9; color: var(--block);
+}
+.form-error strong {
+  display: block; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px;
+  letter-spacing: .03em; margin-bottom: 2px;
+}
+
+/* ---- demo shortcuts --------------------------------------------- */
+.toggle {
+  display: flex; align-items: center; gap: 7px; font-size: 12.5px;
+  color: var(--ink-2); cursor: pointer; white-space: nowrap; user-select: none;
+}
+.toggle input { margin: 0; cursor: pointer; }
+
+.shortcut-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 0 0 14px; padding: 8px 12px; border-radius: 8px;
+  background: #fbf8f0; border: 1px dashed #dfd2b4;
+}
+
+/* A shortcut bar belongs to the step directly above it, so it is drawn
+   joined to that form rather than floating between two of them. */
+.step-form + .shortcut-bar {
+  margin-top: -15px; border-top-left-radius: 0; border-top-right-radius: 0;
+  border-top-color: transparent;
+}
+.step-form:has(+ .shortcut-bar) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.shortcut-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--warn); margin-right: 2px;
+}
+button.shortcut {
+  font-size: 12px; padding: 4px 10px; background: var(--card); border-color: #ddd0b0;
+}
+button.shortcut:hover:not(:disabled) { border-color: var(--warn); background: #fffdf8; }
+
+/* The demonstration entry point is itself a shortcut. */
+.demo-only { display: none; }
+body.shortcuts-on .demo-only { display: block; }
+
+/* A step that is already done but can be revisited sits back visually. */
+.step-form.secondary { background: var(--card); border-style: dashed; }
+.step-form.secondary h3 { color: var(--ink-2); font-weight: 600; }

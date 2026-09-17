@@ -26,6 +26,10 @@
       <span>Acting as</span>
       <select id="user-select"></select>
     </label>
+    <label class="toggle" title="One-click steps with fixed values, for walking an audience through the pathway. The forms remain available underneath.">
+      <input type="checkbox" id="demo-toggle">
+      <span>Demo shortcuts</span>
+    </label>
     <div id="pack-status" class="pack-status">&hellip;</div>
   </div>
 </header>
@@ -81,10 +85,12 @@
 
       <div class="panel wide">
         <div id="case-detail" class="empty-state">
-          <p>Select a case, or run the seeded demonstration.</p>
-          <button id="btn-demo" class="primary">Run the demonstration sequence</button>
-          <p class="hint">The demonstration shows the system refusing at gate 5 before it shows
-            it succeeding anywhere.</p>
+          <p>Select a case to work it up, or log a new one on the left.</p>
+          <div class="demo-only">
+            <button id="btn-demo" class="primary">Run the demonstration sequence</button>
+            <p class="hint">Creates a case blocked at gate 3, so you can walk the pathway forward
+              one refusal at a time. Gate 5 is the one that matters.</p>
+          </div>
         </div>
       </div>
     </div>
