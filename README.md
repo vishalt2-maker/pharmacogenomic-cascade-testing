@@ -63,6 +63,10 @@ summaries; see `docs/CORRECTIONS.md` §B.
 build step, no Docker. Node runs the TypeScript directly, and the database runs
 inside the Node process.
 
+> On a machine with no developer tools at all, where `git` and `npm` are both
+> missing, follow **[docs/INSTALL.md](docs/INSTALL.md)** instead. It covers
+> macOS and Windows from a blank laptop, and does not require git.
+
 ```bash
 git clone https://github.com/vishalt2-maker/pharmacogenomic-cascade-testing
 cd pharmacogenomic-cascade-testing
