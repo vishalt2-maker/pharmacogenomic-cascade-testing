@@ -69,7 +69,7 @@ npm install
 npm run setup     # create the database, load the rule pack, seed two hospitals
 npm run demo      # the demonstration: refusals first, then the happy path
 npm run serve     # the AMC module at http://localhost:8787
-npm test          # 217 tests
+npm test          # 224 tests
 ```
 
 `npm run demo` writes rendered advisories to `demo-output/`.
@@ -290,7 +290,7 @@ linter refused the whole document. The rule was right.
 
 ## Tests
 
-217 tests, weighted deliberately toward the refusals.
+224 tests, weighted deliberately toward the refusals.
 
 ```
 test/engine.test.ts          75  the gates, the fail-closed invariants, the negative pathway
@@ -301,6 +301,7 @@ test/rls.test.ts             19  cross-organisation isolation against real Postg
 test/registry.test.ts        17  consent, de-identification, small-cell suppression
 test/pdf.test.ts             13  structural validity, or refusal
 test/wording-hygiene.test.ts  7  the system's own strings obey its own wording rules
+test/portability.test.ts      7  a clean clone can build its own database and run
 ```
 
 ---

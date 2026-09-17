@@ -13,6 +13,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 import path from 'node:path';
 
 export const PROJECT_ROOT = path.resolve(
@@ -36,6 +37,14 @@ export async function getDb(): Promise<PGlite> {
   if (instance) return instance;
   if (opening) return opening;
   const dir = dataDir();
+
+  if (dir !== ':memory:') {
+    // PGlite creates its own data directory but not the parents. In a fresh
+    // clone `.data/` does not exist, because it is scratch and git-ignored,
+    // so the first run would fail on a missing parent. Make the whole path.
+    fs.mkdirSync(path.dirname(path.resolve(dir)), { recursive: true });
+  }
+
   opening = PGlite.create(
     dir === ':memory:'
       ? { extensions: { pgcrypto } }
