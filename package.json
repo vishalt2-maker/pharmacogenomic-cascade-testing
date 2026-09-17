@@ -1,0 +1,31 @@
+{
+  "name": "pct-pharmacogenomic-cascade-testing",
+  "version": "0.1.0-concept",
+  "private": true,
+  "type": "module",
+  "description": "Pharmacogenomic Cascade Testing (PCT) - a fail-closed clinical decision support system. CONCEPT BUILD. Not deployed, not validated, not regulatory-cleared.",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "premigrate": "node scripts/check-node.cjs",
+    "migrate": "node src/cli/migrate.ts",
+    "reset": "node scripts/reset-data.cjs && node src/cli/migrate.ts",
+    "seed": "node src/cli/seed.ts",
+    "presetup": "node scripts/check-node.cjs",
+    "setup": "npm run reset && npm run seed",
+    "prestart": "node scripts/check-node.cjs",
+    "start": "npm run setup && npm run serve",
+    "predemo": "node scripts/check-node.cjs",
+    "demo": "node src/cli/demo.ts",
+    "preserve": "node scripts/check-node.cjs",
+    "serve": "node src/api/server.ts",
+    "registry:export": "node src/cli/registry-export.ts",
+    "pretest": "node scripts/check-node.cjs",
+    "test": "node --test --test-reporter=spec \"test/*.test.ts\"",
+    "test:engine": "node --test --test-reporter=spec test/engine.test.ts test/linter.test.ts test/pdf.test.ts"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  }
+}

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCT — Pharmacogenomic Cascade Testing</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+</head>
+<body>
+<div class="concept-bar" role="note">
+  <strong>Concept build.</strong> Nothing here is deployed, validated, or approved by any
+  regulator. The rule pack is demonstration content.
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <div>
+      <h1>Pharmacogenomic Cascade Testing</h1>
+      <p class="tagline">Adverse-reaction module &middot; a system whose primary skill is refusing to act</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <label class="field compact">
+      <span>Acting as</span>
+      <select id="user-select"></select>
+    </label>
+    <div id="pack-status" class="pack-status">&hellip;</div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" class="tab active" data-view="cases">Index cases</button>
+  <button role="tab" class="tab" data-view="registry">Registry</button>
+  <button role="tab" class="tab" data-view="knowledge">Rule pack</button>
+  <button role="tab" class="tab" data-view="codes">Reason codes</button>
+</nav>
+
+<main>
+  <!-- ============ CASES ============ -->
+  <section id="view-cases" class="view active">
+    <div class="split">
+      <aside class="panel">
+        <h2>Index cases</h2>
+        <p class="hint">An index case is a patient whose severe cutaneous reaction is being
+          worked up. Relatives never appear here. There is no table to put them in.</p>
+        <div id="case-list" class="case-list"></div>
+
+        <details class="new-case">
+          <summary>Log a new case</summary>
+          <form id="new-case-form">
+            <label class="field"><span>Medical record number</span>
+              <input name="mrn" required placeholder="MRN-2026-0042">
+              <small>Stored as a keyed digest plus ciphertext. Never in plain text.</small>
+            </label>
+            <div class="row">
+              <label class="field"><span>Year of birth</span>
+                <input name="yearOfBirth" type="number" min="1900" max="2026" value="1988">
+                <small>Year only, not a full date.</small>
+              </label>
+              <label class="field"><span>Sex</span>
+                <select name="sex"><option>F</option><option>M</option><option>Other</option></select>
+              </label>
+            </div>
+            <div class="row">
+              <label class="field"><span>State</span>
+                <input name="state" value="Maharashtra"></label>
+              <label class="field"><span>Preferred language</span>
+                <select name="preferredLanguage">
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
+                  <option value="ta">Tamil (no sheet yet)</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary" type="submit">Create index case</button>
+          </form>
+        </details>
+      </aside>
+
+      <div class="panel wide">
+        <div id="case-detail" class="empty-state">
+          <p>Select a case, or run the seeded demonstration.</p>
+          <button id="btn-demo" class="primary">Run the demonstration sequence</button>
+          <p class="hint">The demonstration shows the system refusing at gate 5 before it shows
+            it succeeding anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REGISTRY ============ -->
+  <section id="view-registry" class="view">
+    <div class="panel">
+      <h2>Registry</h2>
+      <p class="hint">De-identified and aggregate only. No organisation, no case identifier,
+        no date finer than the month. Any cell below the suppression threshold is withheld,
+        because in a population with an allele frequency of a couple of per cent, a count of
+        one in a named state and month is a person.</p>
+      <div class="toolbar">
+        <button id="btn-export" class="primary">Run export (dry run)</button>
+        <button id="btn-export-commit">Commit export</button>
+        <label class="field compact"><span>Suppress below</span>
+          <input id="threshold" type="number" value="5" min="1" max="50"></label>
+      </div>
+      <div id="registry-out"></div>
+      <h3>Pilot endpoints</h3>
+      <p class="hint">The falsifiable prediction is stated in advance: carrier yield in tested
+        relatives should approach 50%. If it returns at population baseline, the thesis is
+        wrong, and the point of measuring is to find that out early and cheaply.</p>
+      <div id="endpoints-out"></div>
+    </div>
+  </section>
+
+  <!-- ============ KNOWLEDGE ============ -->
+  <section id="view-knowledge" class="view">
+    <div class="panel">
+      <h2>Rule pack</h2>
+      <div id="pack-out"></div>
+      <h3>Verified figures</h3>
+      <p class="hint">Every number this system shows outside a laboratory result is listed
+        here with the source it came from. Nothing is stated that is not on this list.</p>
+      <div id="figures-out"></div>
+    </div>
+  </section>
+
+  <!-- ============ REASON CODES ============ -->
+  <section id="view-codes" class="view">
+    <div class="panel">
+      <h2>Reason codes</h2>
+      <p class="hint">Every reason the engine can give. There is no &ldquo;other&rdquo;. The
+        system will always be able to say exactly why it produced nothing.</p>
+      <div id="codes-out"></div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>
