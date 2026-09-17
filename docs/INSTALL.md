@@ -154,9 +154,26 @@ That is the normal starting state. Log a case with the form on the left, or
 turn on **Demo shortcuts** in the header and use **Run the demonstration
 sequence**.
 
+**`RuntimeError: Aborted()` on startup, or the server will not start again**
+The local database directory is damaged. This happens if the process is killed
+abruptly rather than stopped with Ctrl+C, which is easy to do by closing a
+terminal window mid-demonstration. Rebuild it:
+
+```
+npm run setup
+```
+
+Nothing of value is lost. The database is scratch and is rebuilt from the
+migrations and the seed every time.
+
 **You want to start over**
-`npm run setup` deletes the local database and rebuilds it from the migrations
-and the seed. Nothing is lost that matters: the database is scratch.
+`npm run setup` deletes the local database and rebuilds it. If you want the
+demonstration data back as well, follow it with `npm run demo`.
+
+**Before a demonstration**
+Stop the server with Ctrl+C rather than closing the window, and if the machine
+has been sitting idle, run `npm run setup && npm run demo` once beforehand so
+you are not rebuilding anything in front of an audience.
 
 ---
 
